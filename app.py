@@ -1,40 +1,51 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
-
 import streamlit as st
 import google.generativeai as genai
 
-# Configuring the Key and initiating the model
-genai.configure(api_key=os.getenv('GOOGLE-API-KEY'))
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Load and Configure API
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE-API-KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-st.markdown("<h2 style='text-align: center;'>🤖 Gemini Chatbot</h2>", unsafe_allow_html=True)
+# App Title
+st.markdown(
+    "<h2 style='text-align: center;'>🤖 Gemini AI Chatbot 💬</h2>",
+    unsafe_allow_html=True
+)
 
-# Initiate the memory
+# Memory Management
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Display the chat
+# Display Chat History
 for chat in st.session_state.chat_history:
-    with st.chat_message(chat['role']):
-        st.markdown(chat['content'])
+    with st.chat_message(chat["role"]):
+        st.markdown(chat["content"])
 
-user_input = st.chat_input("What do you want to ask?")
-
+# Chat Input
+user_input = st.chat_input("💡 Ask me anything...")
 if user_input:
+    # Show user's message
     st.chat_message("user").markdown(user_input)
-    st.session_state.chat_history.append({"role":"user",
-                                         "content":user_input})
-    
-    gemini_history = [{"role":msg["role"],
-                       "parts":msg["content"]} for msg in st.session_state.chat_history]
-    
-    response = model.generate_content(gemini_history).text
+    st.session_state.chat_history.append({
+        "role": "user",
+        "content": user_input
+    })
 
+    # Format chat history for Gemini API
+    gemini_history = [
+        {"role": msg["role"], "parts": [{"text": msg["content"]}]}
+        for msg in st.session_state.chat_history
+    ]
 
-    # Show Gemini Response
-    bot_reply = response
-    st.chat_message(bot_reply).markdown(bot_reply)
-    st.session_state.chat_history.append({"role":"assistant",
-                                          "content":bot_reply})
+    # Generate response from Gemini
+    response = model.generate_content(gemini_history)
+    bot_reply = response.text
+
+    # Show assistant reply
+    st.chat_message("assistant").markdown(bot_reply)
+    st.session_state.chat_history.append({
+        "role": "assistant",
+        "content": bot_reply
+    })
